@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aleph Bible Dictionary</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card:hover {
+      transform: scale(1.05) rotateY(5deg);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #dc2626, #f59e0b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    
+    .verse-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .alphabet-filter {
+      backdrop-filter: blur(8px);
+      background: rgba(255,255,255,0.8);
+    }
+    
+    .search-glow:focus {
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+    
+    
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.33);
+        opacity: 1;
+      }
+      80%, 100% {
+        transform: scale(2.4);
+        opacity: 0;
+      }
+    }
+    
+    .theme-dark {
+      background: linear-gradient(135deg, #1f2937, #374151);
+    }
+    
+    .theme-dark .verse-card {
+      background: linear-gradient(135deg, rgba(0,0,0,0.3), rgba(0,0,0,0.1));
+    }
+    
+    .audio-visualization {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .audio-bar {
+      width: 2px;
+      height: 100%;
+      background: currentColor;
+      margin: 0 1px;
+      animation: audio-wave 1s infinite ease-in-out;
+    }
+    
+    .audio-bar:nth-child(2) { animation-delay: 0.1s; }
+    .audio-bar:nth-child(3) { animation-delay: 0.2s; }
+    .audio-bar:nth-child(4) { animation-delay: 0.3s; }
+    
+    @keyframes audio-wave {
+      0%, 100% { height: 4px; }
+      50% { height: 16px; }
+    }
+  </style> 
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 min-h-screen text-gray-900 flex flex-col font-sans transition-all duration-500">
+
+  <header class="bg-gradient-to-r from-red-600 via-pink-500 to-yellow-500 text-white py-8 shadow-2xl text-center relative overflow-hidden">
+    <div class="absolute inset-0 bg-black opacity-10"></div>
+    <div class="relative z-10">
+      <h1 class="text-4xl sm:text-5xl font-extrabold tracking-wide uppercase drop-shadow-lg floating">
+        Aleph Bible Dictionary
+      </h1>
+      <p class="text-base sm:text-lg mt-3 font-light tracking-wide opacity-90">
+        Interactive Greek & Hebrew Alphabet Explorer
+      </p>
+      
+      <!-- Theme Toggle -->
+      <button id="themeToggle" class="absolute top-4 right-4 p-2 rounded-full bg-white/20 hover:bg-white/30 transition-all">
+        <span id="themeIcon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-grow container mx-auto px-4 py-10 cursor-default">
+    
+    <!-- Search Section -->
+    <div class="mb-12 text-center">
+      <div class="max-w-2xl mx-auto">
+        <h2 class="text-2xl font-bold gradient-text mb-6">🔍 Verse Search & Audio</h2>
+        <div class="flex gap-3 mb-4">
+          <input 
+            type="text" 
+            id="verseInput" 
+            placeholder="Enter verse (e.g., John 3:16, Genesis 1:1)" 
+            class="flex-1 px-4 py-3 border-2 border-orange-300 rounded-xl focus:border-red-500 focus:outline-none search-glow transition-all"
+          />
+          <button 
+            id="searchButton" 
+            class="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl hover:from-red-600 hover:to-orange-600 transition-all transform hover:scale-105 disabled:opacity-50"
+          >
+            Search
+          </button>
+        </div>
+        
+        <!-- Search Results -->
+        <div id="verseResult" class="verse-card rounded-2xl p-6 shadow-xl hidden">
+          <div class="flex justify-between items-center mb-4">
+            <h3 id="verseReference" class="text-xl font-bold text-red-600"></h3>
+            <button id="audioButton" class="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">
+              <div class="audio-visualization">
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+                <div class="audio-bar"></div>
+              </div>
+              Listen
+            </button>
+          </div>
+          <div id="originalText" class="text-2xl font-serif mb-4 text-gray-900"></div>
+          <div id="translitText" class="text-sm italic text-gray-600 mb-2"></div>
+          <div id="englishText" class="text-base font-light text-gray-700"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alphabet Filter -->
+    <div class="alphabet-filter rounded-2xl p-4 mb-8 text-center shadow-lg">
+      <div class="flex flex-wrap justify-center gap-2 mb-4">
+        <button class="filter-btn px-3 py-1 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-all" data-filter="all">All</button>
+        <button class="filter-btn px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all" data-filter="greek">Greek Only</button>
+        <button class="filter-btn px-3 py-1 rounded-lg bg-gray-200 hover:bg-gray-300 transition-all" data-filter="hebrew">Hebrew Only</button>
+      </div>
+      <input type="text" id="alphabetSearch" placeholder="Search letters by name..." class="px-4 py-2 border rounded-lg w-64 focus:outline-none focus:border-red-500">
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12" id="alphabetContainer"> 
+      
+      <!-- Greek Section -->
+      <section id="greekSection">
+        <h2 class="text-2xl sm:text-3xl font-bold text-red-600 mb-6 border-b-4 border-red-300 inline-block flex items-center gap-2">
+          <span class="text-3xl">🇬🇷</span> Greek Alphabet
+          <span class="text-sm font-normal ml-2 px-2 py-1 bg-red-100 rounded-full" id="greekCount">24 letters</span>
+        </h2>
+        <div id="greek-list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+
+        <div class="mt-10 verse-card p-6 rounded-2xl shadow-xl">
+          <h3 class="text-xl sm:text-2xl font-bold text-red-600 mb-4 flex items-center gap-2">
+            📜 John 1:1 (Greek)
+            <button class="audio-btn text-sm px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" data-text="john-1-1-greek">🔊</button>
+          </h3>
+
+          <!-- Greek Original -->
+          <p class="text-2xl font-serif mb-4 text-gray-900 flex flex-wrap gap-2">
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">Ἐν
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                In
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">ἀρχῇ
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                beginning
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">ἦν
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                was
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">ὁ Λόγος
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                the Word
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">καὶ
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                and
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">ὁ Λόγος
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                the Word
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">ἦν πρὸς τὸν Θεόν
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                was with God
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">καὶ Θεὸς ἦν ὁ Λόγος
+              <span class="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                and God was the Word
+              </span>
+            </span>.
+          </p>
+
+          <!-- Transliteration -->
+          <p class="text-sm italic text-gray-600 mb-2">En archē ēn ho Logos, kai ho Logos ēn pros ton Theon, kai Theos ēn ho Logos.</p>
+
+          <!-- English -->
+          <p class="text-base font-light text-gray-700">In the beginning was the Word, and the Word was with God, and the Word was God.</p>
+        </div>
+      </section>
+
+      <!-- Hebrew Section -->
+      <section id="hebrewSection">
+        <h2 class="text-2xl sm:text-3xl font-bold text-amber-700 mb-6 border-b-4 border-amber-300 inline-block flex items-center gap-2">
+          <span class="text-3xl">🇮🇱</span> Hebrew Alphabet
+          <span class="text-sm font-normal ml-2 px-2 py-1 bg-amber-100 rounded-full" id="hebrewCount">22 letters</span>
+        </h2>
+        <div id="hebrew-list" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+
+        <div class="mt-10 verse-card p-6 rounded-2xl shadow-xl">
+          <h3 class="text-xl sm:text-2xl font-bold text-amber-700 mb-4 flex items-center gap-2">
+            📜 Genesis 1:1 (Hebrew)
+            <button class="audio-btn text-sm px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600" data-text="genesis-1-1-hebrew">🔊</button>
+          </h3>
+
+          <!-- Hebrew Original -->
+          <p class="text-2xl font-serif mb-4 text-right text-gray-900 flex flex-wrap justify-end gap-2">
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">בְּרֵאשִׁית
+              <span class="absolute bottom-full mb-2 right-0 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                In the beginning
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">בָּרָא
+              <span class="absolute bottom-full mb-2 right-0 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                created
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">אֱלֹהִים
+              <span class="absolute bottom-full mb-2 right-0 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                God
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">אֵת
+              <span class="absolute bottom-full mb-2 right-0 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                [direct object marker]
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">הַשָּׁמַיִם
+              <span class="absolute bottom-full mb-2 right-0 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                the heavens
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">וְאֵת
+              <span class="absolute bottom-full mb-2 right-0 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                and [direct object]
+              </span>
+            </span>
+            <span class="group relative cursor-help hover:bg-yellow-100 px-1 rounded transition-all">הָאָרֶץ
+              <span class="absolute bottom-full mb-2 right-0 text-xs bg-black text-white rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-all z-10 whitespace-nowrap">
+                the earth
+              </span>
+            </span>
+          </p>
+
+          <!-- Transliteration -->
+          <p class="text-sm italic text-gray-600 mb-2 text-left">B'reishit bara Elohim et hashamayim v'et ha'aretz.</p>
+
+          <!-- English -->
+          <p class="text-base font-light text-gray-700 text-left">In the beginning, God created the heavens and the earth.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="verse-card rounded-2xl p-6 text-center shadow-xl">
+        <div class="text-4xl mb-2">📊</div>
+        <div class="text-2xl font-bold text-red-600" id="totalLetters">46</div>
+        <div class="text-sm text-gray-600">Total Letters</div>
+      </div>
+      <div class="verse-card rounded-2xl p-6 text-center shadow-xl">
+        <div class="text-4xl mb-2">🎯</div>
+        <div class="text-2xl font-bold text-amber-600" id="filteredCount">46</div>
+        <div class="text-sm text-gray-600">Currently Showing</div>
+      </div>
+      <div class="verse-card rounded-2xl p-6 text-center shadow-xl">
+        <div class="text-4xl mb-2">⭐</div>
+        <div class="text-2xl font-bold text-green-600" id="interactionCount">0</div>
+        <div class="text-sm text-gray-600">Letters Explored</div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-gradient-to-r from-yellow-200 via-orange-200 to-red-200 py-8 mt-16 shadow-inner rounded-t-2xl text-center">
+    <div class="flex flex-col items-center space-y-3">
+      <p class="text-lg font-medium text-gray-800 flex items-center gap-2">
+        ✨ Created by
+        <a class="underline text-red-600 hover:text-red-800 transition-colors font-bold" href="https://www.mattbramer.com" target="_blank" rel="noopener">
+          Matt Bramer
+        </a>
+      </p>
+      <p class="text-base font-medium text-gray-800 flex items-center gap-2">
+        💻 Code on
+        <a class="underline text-amber-700 hover:text-yellow-900 transition-colors font-bold" href="https://github.com/bramermatt/qr-code" target="_blank" rel="noopener">
+          GitHub
+        </a>
+      </p>
+      <p class="text-sm text-gray-600 mt-4">
+        🌟 Enhanced with love for biblical language learners
+      </p>
+    </div>
+  </footer>
+  <script src="js/aleph.js"></script>
+</body>
+</html>
