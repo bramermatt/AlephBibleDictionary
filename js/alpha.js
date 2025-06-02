@@ -50,6 +50,40 @@ const hebrewAlphabet = [
   { letter: "ת", name: "Tav", transliteration: "T", pronunciation: "tahv" },
 ];
 
+const greekText = "Ἐν ἀρχῇ ἦν ὁ Λόγος καὶ ὁ Λόγος ἦν πρὸς τὸν Θεόν, καὶ Θεὸς ἦν ὁ Λόγος.";
+const hebrewVerse = "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ";
+
+let currentUtterance = null;
+
+function toggleSpeech(text, langCode, voicePrefix, rate = 0.7) {
+  if (speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  const voices = speechSynthesis.getVoices();
+  const selectedVoice = voices.find(v => v.lang.startsWith(voicePrefix));
+  if (selectedVoice) utterance.voice = selectedVoice;
+
+  utterance.lang = langCode;
+  utterance.rate = rate;
+  currentUtterance = utterance;
+  speechSynthesis.speak(utterance);
+}
+
+document.getElementById("playGreekAudio").addEventListener("click", () => {
+  toggleSpeech(greekText, "el-GR", "el");
+});
+
+document.getElementById("playHebrewAudio").addEventListener("click", () => {
+  toggleSpeech(hebrewVerse, "he-IL", "he");
+});
+
+// Ensure voices are loaded (important for some browsers)
+speechSynthesis.onvoiceschanged = () => {};
+
+
 
 function renderAlphabet(list, elementId) {
   const container = document.getElementById(elementId);
@@ -65,6 +99,14 @@ function renderAlphabet(list, elementId) {
     if (subLetters.length > 0) {
       letterLine += " / " + subLetters.join(" / ");
     }
+    card.addEventListener("click", () => {
+      const utterance = new SpeechSynthesisUtterance(pronunciation);
+      utterance.lang = "en-US";
+      utterance.pitch = 1;
+      utterance.rate = 0.8;
+      speechSynthesis.speak(utterance);
+    });
+
     card.innerHTML = `
       <div class="text-2xl font-bold text-orange-600 mb-1">${letterLine}</div>
       <div class="text-m font-semibold">${name}</div>
