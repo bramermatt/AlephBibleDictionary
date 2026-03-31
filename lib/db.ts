@@ -8,32 +8,12 @@ const DB_PATH = path.join(process.cwd(), 'data', 'aleph.sqlite');
 const mockEntriesPath = path.join(process.cwd(), 'data', 'mockEntries.json');
 
 let db: Database.Database | null = null;
-let sqliteUnavailable = false;
-
-function searchMockEntries(term: string): Entry[] {
-  const rows = JSON.parse(readFileSync(mockEntriesPath, 'utf-8')) as Array<Pick<Entry, 'word' | 'definition'>>;
-  const normalized = term.toLowerCase();
-  return rows
-    .filter(
-      (row) => row.word.toLowerCase().includes(normalized) || row.definition.toLowerCase().includes(normalized)
-    )
-    .slice(0, 50)
-    .map((row, index) => ({ id: index + 1, ...row }));
-}
 
 function getDb() {
-  if (sqliteUnavailable) {
-    throw new Error('SQLite unavailable in this runtime.');
-  }
   if (!db) {
-    try {
-      db = new Database(DB_PATH);
-      db.pragma('journal_mode = WAL');
-      initialize(db);
-    } catch (error) {
-      sqliteUnavailable = true;
-      throw error;
-    }
+    db = new Database(DB_PATH);
+    db.pragma('journal_mode = WAL');
+    initialize(db);
   }
   return db;
 }
@@ -108,27 +88,17 @@ export function authenticateUser(email: string, password: string) {
 }
 
 export function searchEntries(term: string): Entry[] {
-  try {
-    const conn = getDb();
-    return conn
-      .prepare(
-        'SELECT id, word, definition FROM entries WHERE word LIKE ? OR definition LIKE ? ORDER BY word ASC LIMIT 50'
-      )
-      .all(`%${term}%`, `%${term}%`) as Entry[];
-  } catch {
-    return searchMockEntries(term);
-  }
+  const conn = getDb();
+  return conn
+    .prepare(
+      'SELECT id, word, definition FROM entries WHERE word LIKE ? OR definition LIKE ? ORDER BY word ASC LIMIT 50'
+    )
+    .all(`%${term}%`, `%${term}%`) as Entry[];
 }
 
 export function getEntryByWord(word: string): Entry | undefined {
-  try {
-    const conn = getDb();
-    return conn
-      .prepare('SELECT id, word, definition FROM entries WHERE lower(word) = lower(?)')
-      .get(word) as Entry | undefined;
-  } catch {
-    return searchMockEntries(word).find((entry) => entry.word.toLowerCase() === word.toLowerCase());
-  }
+  const conn = getDb();
+  return conn.prepare('SELECT id, word, definition FROM entries WHERE lower(word) = lower(?)').get(word) as Entry | undefined;
 }
 
 export function getEntryById(id: number): Entry | undefined {

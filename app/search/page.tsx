@@ -5,9 +5,9 @@ import { searchEntries } from '@/lib/db';
 export default function SearchPage({
   searchParams
 }: {
-  searchParams?: { q?: string };
+  searchParams: { q?: string };
 }) {
-  const q = (searchParams?.q ?? '').trim();
+  const q = (searchParams.q ?? '').trim();
   const results = q ? searchEntries(q) : [];
 
   return (
